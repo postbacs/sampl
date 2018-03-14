@@ -22,12 +22,21 @@ for idx, name, smiles in mol_table.itertuples():
     print(smiles)
     print('Total atoms for molecule %s = %d' % (name, tmpmol.NumAtoms()))
     mols.append(tmpmol)
-    obConverter.WriteFile(tmpmol, '%s.pdb' % name)
+    # No coords
+    #obConverter.WriteFile(tmpmol, '%s.pdb' % name)
 
-pybmols = map(pyb.Molecule,mols)
-map(lambda x: x.make3D(),pybmols)
-for curr, name in zip(pybmols, mol_table['SAMPL6 Molecule ID']):
+pybmols = [ pyb.Molecule(m) for m in mols ]
+def applypyb3D(mol):
+    try:
+        mol.make3D()
+        return mol
+    except AttributeError:
+        print("Molecule doesn't appear to be pybel Molecule object")
+        return mol
+
+for curr, name in zip(map(applypyb3D, pybmols), mol_table['SAMPL6 Molecule ID']):
     curr.title = name
+    # 3D & 2D coords/image
     curr.write('pdb', '%s_3D.pdb' % name, overwrite=True)
     curr.draw(show=False, filename='%s_2D.png' % name)
 
